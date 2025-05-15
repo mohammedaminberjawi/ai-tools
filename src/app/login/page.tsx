@@ -7,8 +7,10 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let hasError = false;
     const newErrors = { username: "", password: "" };
@@ -36,10 +38,45 @@ const LoginPage = () => {
     }
 
     setErrors(newErrors);
+    setApiError("");
 
     if (!hasError) {
-      // Proceed with form submission logic
-      console.log("Form submitted:", { username, password });
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: username,
+            password: password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Login failed");
+        }
+
+        // Handle successful login
+        console.log("Login successful:", data);
+        // Here you would typically:
+        // 1. Store the user data in your state management solution
+        // 2. Set any necessary cookies/tokens
+        // 3. Redirect to the dashboard or home page
+        window.location.href = "/"; // Temporary redirect to home page
+      } catch (error) {
+        console.error("Login error:", error);
+        setApiError(
+          error instanceof Error
+            ? error.message
+            : "An error occurred during login"
+        );
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -109,10 +146,17 @@ const LoginPage = () => {
 
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 w-full"
+          disabled={isLoading}
+          className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 w-full ${
+            isLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
-          Login
+          {isLoading ? "Logging in..." : "Login"}
         </button>
+
+        {apiError && (
+          <p className="text-red-500 text-sm mt-4 text-center">{apiError}</p>
+        )}
       </form>
     </div>
   );
