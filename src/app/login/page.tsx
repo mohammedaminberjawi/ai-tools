@@ -68,7 +68,7 @@ const LoginPage = () => {
           Email:
         </label>
         <input
-          type="text"
+          type="email"
           id="username"
           name="username"
           value={username}
